@@ -1,0 +1,20 @@
+{
+  "name": "React-rpg",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:TaupeInHambourg/react-rpg.git",
+  "author": "Audrey Norvez <audrey.norvez@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "init": "cd frontend/ && yarn && cd ../backend && yarn",
+    "dev:front": "cd frontend/ && yarn dev",
+    "dev:back": "cd backend/ && yarn dev"
+  },
+  "devDependencies": {
+    "standard": "^17.1.2"
+  },
+  "dependencies": {
+    "react-toastify": "^11.0.5",
+    "slugify": "^1.6.6"
+  }
+}
