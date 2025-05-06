@@ -14,11 +14,12 @@ app.use(helmet())
 app.use(cors())
 app.use(morgan('dev'))
 
-app.get('/api', (req, res) => {
-  res.send('🌸 HOLA BEBOUUUU 🌸')
+app.get('/', (req, res) => {
+  res.send('HOLA BEBOUUUU')
 })
 
-app.use('/api/generate-avatar', require('./routes/generate-avatar'))
+app.use('/generate-avatar', require('./routes/generate-avatar'))
+app.use('/generate-player', require('./routes/generate-player'))
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useReducer } from 'react'
-import { strapiLoginLocal, strapiRegisterLocal } from '../api/strapi'
+import { strapiGetUser, strapiLoginLocal, strapiRegisterLocal } from '../api/strapi'
 import { toast } from 'react-toastify'
 
 const AuthContext = createContext()
@@ -14,21 +14,29 @@ const initialState = {
 
 const actionTypes = {
   LOGIN_SUCCESS: 'LOGIN_SUCCESS',
-  REGISTER_SUCCES: 'REGISTER_SUCCESS',
+  REGISTER_SUCCESS: 'REGISTER_SUCCESS',
+  LOAD_USER_DATA: 'LOAD_USER_DATA',
   ERROR: 'ERROR',
   LOADING: 'LOADING',
   LOGOUT: 'LOGOUT'
 }
 
-// previousState  = état précédent
+// previousState = état précédent
 const authReducer = (previousState, action) => {
   switch (action.type) {
     case actionTypes.LOGIN_SUCCESS:
-    case actionTypes.REGISTER_SUCCES:
+    case actionTypes.REGISTER_SUCCESS:
       return {
         user: action.data.user,
         jwt: action.data.jwt,
         isLoggedIn: true,
+        loading: false,
+        error: null
+      }
+    case actionTypes.LOAD_USER_DATA:
+      return {
+        ...previousState,
+        user: action.data,
         loading: false,
         error: null
       }
@@ -45,11 +53,10 @@ const authReducer = (previousState, action) => {
     case actionTypes.LOGOUT:
       return initialState
     default:
-      throw new Error(`Unhandled action type: ${action.type}`)
+      throw new Error(`Unhandled action type : ${action.type}`)
   }
 }
 
-// Répartit les actions
 const authFactory = (previousState, dispatch) => ({
   login: async (credentials) => {
     dispatch({
@@ -67,20 +74,36 @@ const authFactory = (previousState, dispatch) => ({
       handleError(dispatch, error)
     }
   },
-  register: async (credentials) => {
+  register: async (user) => {
     dispatch({
       type: actionTypes.LOADING
     })
     try {
-      const registerData = await strapiRegisterLocal(credentials)
+      const registerData = await strapiRegisterLocal(user)
       if (registerData.user && registerData.jwt) {
         dispatch({
-          type: actionTypes.REGISTER_SUCCES,
+          type: actionTypes.REGISTER_SUCCESS,
           data: registerData
         })
       }
     } catch (error) {
       handleError(dispatch, error)
+    }
+  },
+  loadUserData: async () => {
+    dispatch({
+      type: actionTypes.LOADING
+    })
+    try {
+      const user = await strapiGetUser()
+      if (user) {
+        dispatch({
+          type: actionTypes.LOAD_USER_DATA,
+          data: user
+        })
+      }
+    } catch (error) {
+      handleError(error)
     }
   },
   logout: () => {
@@ -92,22 +115,20 @@ const authFactory = (previousState, dispatch) => ({
 
 const handleError = (dispatch, error) => {
   console.error(error)
-  toast.error('Identifiants manquants ou incorrects')
+  toast.error(error?.response?.data?.error?.message)
   dispatch({
     type: actionTypes.ERROR,
     error: error?.response?.data?.error?.message
   })
 }
 
-// Répartit aux composants enfants
 const AuthProvider = ({ children }) => {
-  // Récupère l'état de l'utilisateur depuis le localStorage
+  // Récupération de l'état sauvegardé
   const savedState = JSON.parse(window.localStorage.getItem('@AUTH'))
-
   const [state, dispatch] = useReducer(authReducer, savedState || initialState)
 
-  // Permet de sauvegarder l'état de l'utilisateur dans le localStorage
   useEffect(() => {
+    // Sauvegarde de l'état à chaque changement via la liste de dépendances du useEffect()
     window.localStorage.setItem('@AUTH', JSON.stringify(state))
   }, [state])
 
@@ -120,7 +141,7 @@ const AuthProvider = ({ children }) => {
 
 const useAuth = () => {
   const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within an AuthProvider')
+  if (!context) throw new Error('useAuth must be used inside a AuthProvider')
   return context
 }
 

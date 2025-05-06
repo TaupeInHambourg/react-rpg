@@ -1,26 +1,16 @@
-import { useNavigate } from 'react-router'
-import Button from '../components/Button'
+import { useEffect } from 'react'
 import ProfileSection from '../components/sections/ProfileSection'
 import { useAuth } from '../contexts/AuthContext'
 
 function ProfilePage() {
-  const { logout } = useAuth()
-  const navigate = useNavigate()
+  const { loadUserData } = useAuth()
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
+  useEffect(() => {
+    loadUserData()
+  }, [])
 
   return (
-    <>
-      <ProfileSection />
-      <Button
-        variant='error'
-        onClick={handleLogout}
-      >Déconnexion
-      </Button>
-    </>
+    <ProfileSection />
   )
 }
 
